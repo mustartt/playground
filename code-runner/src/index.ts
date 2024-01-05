@@ -48,7 +48,6 @@ function getConnectQuery(query: ParsedUrlQuery): TerminalOpenRequest {
     };
 }
 
-
 io.on('connection', (socket) => {
     console.log('a user connected');
 
@@ -58,12 +57,29 @@ io.on('connection', (socket) => {
     process.onData((data: string) => {
         socket.emit('data', data);
     });
-    process.onExit((ec) => {
-        console.log(`process exited with ec ${ec}.`);
+    socket.on('data', (data: string) => {
+        process.write(data);
     });
 
-    socket.on('close', (reason, description) => {
+    process.onExit((ec) => {
+        socket.emit('close', {
+            exitCode: ec.exitCode.valueOf()
+        });
+        console.log(`process exited with ec ${ec.exitCode}.`);
+    });
+
+    socket.on('resize', (resize: any) => {
+        const {rows, cols} = resize;
+        process.resize(cols, rows);
+    });
+
+    socket.on('close', () => {
         process.kill();
+    });
+
+    socket.on('disconnect', (reason, description) => {
+        process.kill();
+        console.log('a user disconnected');
     });
 });
 

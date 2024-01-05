@@ -28,6 +28,7 @@
 	"type": "module",
 	"dependencies": {
 		"socket.io": "^4.7.3",
-		"socket.io-client": "^4.7.3"
+		"socket.io-client": "^4.7.3",
+		"xterm-webfont": "^2.0.0"
 	}
 }
