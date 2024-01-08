@@ -5,6 +5,7 @@ import cors from 'cors';
 import * as os from 'os';
 import * as pty from 'node-pty';
 import {ParsedUrlQuery} from "node:querystring";
+import ShellProcess, {TerminalOpenRequest} from "./terminal";
 
 const app = express();
 const server = http.createServer(app);
@@ -21,11 +22,6 @@ app.use(cors());
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
-
-interface TerminalOpenRequest {
-    rows: number,
-    cols: number,
-}
 
 function spawnTerminal(rows: number, cols: number) {
     const isWindows = os.platform() === 'win32';
@@ -51,36 +47,9 @@ function getConnectQuery(query: ParsedUrlQuery): TerminalOpenRequest {
 io.on('connection', (socket) => {
     console.log('a user connected');
 
-    const {rows, cols} = getConnectQuery(socket.handshake.query);
-    const process = spawnTerminal(rows, cols);
-
-    process.onData((data: string) => {
-        socket.emit('data', data);
-    });
-    socket.on('data', (data: string) => {
-        process.write(data);
-    });
-
-    process.onExit((ec) => {
-        socket.emit('close', {
-            exitCode: ec.exitCode.valueOf()
-        });
-        console.log(`process exited with ec ${ec.exitCode}.`);
-    });
-
-    socket.on('resize', (resize: any) => {
-        const {rows, cols} = resize;
-        process.resize(cols, rows);
-    });
-
-    socket.on('close', () => {
-        process.kill();
-    });
-
-    socket.on('disconnect', (reason, description) => {
-        process.kill();
-        console.log('a user disconnected');
-    });
+    const openRequest = getConnectQuery(socket.handshake.query);
+    const proc = new ShellProcess(openRequest);
+    proc.register(socket);
 });
 
 server.listen(3000, () => {

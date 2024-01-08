@@ -4,6 +4,7 @@
 
     let socket: Socket;
     let terminal: any;
+    let container: any;
     let resizeObserver: any;
     let resizeTimeout: any;
 
@@ -50,47 +51,46 @@
         term.write('Initializing container...\r\n');
         term.writeln("");
 
-        socket = io('http://localhost:3000', {
-            path: '/socket',
-            timeout: 5000,
-            reconnectionAttempts: 5,
-            query: {
-                rows: 24,
-                cols: 80
-            }
-        });
+        // socket = io('http://localhost:3000', {
+        //     path: '/socket',
+        //     timeout: 5000,
+        //     reconnectionAttempts: 5,
+        //     query: {
+        //         rows: 24,
+        //         cols: 80
+        //     }
+        // });
 
         resizeObserver = new ResizeObserver((entries) => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
-                console.log('resized');
                 fitAddon.fit();
-                const dim = fitAddon.proposeDimensions();
-                socket.emit('resize', dim);
-            }, 100);
+                // const dim = fitAddon.proposeDimensions();
+                // socket.emit('resize', dim);
+            }, 25);
         });
-        resizeObserver.observe(terminal);
+        resizeObserver.observe(container);
 
-        socket.on('connect', () => {
-            term.writeln("");
-            term.writeln("Connected to container, starting terminal session...");
-            term.writeln("");
-            console.log('socket connected');
-
-            socket.on('data', (data) => {
-                term.write(data);
-            });
-
-            socket.on('close', (data: TerminalClose) => {
-                term.write('\r\n');
-                term.write(`Terminal closed with exit code ${data.exitCode}. \r\n`);
-                socket.close();
-            });
-
-            term.onData((data) => {
-                socket.emit('data', data);
-            });
-        });
+        // socket.on('connect', () => {
+        //     term.writeln("");
+        //     term.writeln("Connected to container, starting terminal session...");
+        //     term.writeln("");
+        //     console.log('socket connected');
+        //
+        //     socket.on('data', (data) => {
+        //         term.write(data);
+        //     });
+        //
+        //     socket.on('close', (data: TerminalClose) => {
+        //         term.write('\r\n');
+        //         term.write(`Terminal closed with exit code ${data.exitCode}. \r\n`);
+        //         socket.close();
+        //     });
+        //
+        //     term.onData((data) => {
+        //         socket.emit('data', data);
+        //     });
+        // });
     });
 
     onDestroy(() => {
@@ -99,4 +99,6 @@
 </script>
 
 <link rel="stylesheet" href="node_modules/xterm/css/xterm.css"/>
-<div class="h-full" bind:this={terminal}/> <!-- bind the element to the 'terminal' var -->
+<div class="flex-auto bg-black min-h-0" bind:this={container}>
+    <div class="flex-auto h-full" bind:this={terminal}/> <!-- bind the element to the 'terminal' var -->
+</div>

@@ -7,6 +7,8 @@
     let delta = 0;
     let isMouseDown = false;
     let containerW: any;
+    let windowW: any;
+    let oldWindowW: any;
     let initialL: any;
     let leftW: any;
     let rightW: any;
@@ -14,6 +16,7 @@
     onMount(() => {
         leftW = (containerW - splitterWidth) / 2;
         rightW = (containerW - splitterWidth) / 2;
+        oldWindowW = windowW;
     });
 
     function handleMouseMove(e: any) {
@@ -26,7 +29,6 @@
                         containerW - splitterWidth - minWidth
                         :
                         initialL - delta;
-
             rightW = containerW - leftW - splitterWidth;
         }
     }

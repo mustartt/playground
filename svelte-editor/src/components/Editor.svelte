@@ -5,6 +5,9 @@
     let editor: Monaco.editor.IStandaloneCodeEditor;
     let monaco: typeof Monaco;
     let editorContainer: HTMLElement;
+    let container: any;
+    let resizeObserver: any;
+    let timeoutId: any;
 
     onMount(async () => {
         // Import our 'monaco.ts' file here
@@ -19,12 +22,21 @@
         editor = monaco.editor.create(editorContainer, {
             theme: "vs-dark",
             scrollBeyondLastLine: true,
-            automaticLayout: true,
+            automaticLayout: false, // we use automatic layout to shrink
             padding: {
                 top: 24
             }
         });
         editor.setModel(model);
+
+        resizeObserver = new ResizeObserver((entries) => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                editor.layout();
+            }, 25);
+        });
+        resizeObserver.observe(container);
+
     });
 
     onDestroy(() => {
@@ -33,4 +45,7 @@
     });
 </script>
 
-<div class="w-full h-full" bind:this={editorContainer}></div>
+<div class="flex-auto bg-black min-h-0" bind:this={container}>
+    <div class="flex-auto h-full" bind:this={editorContainer}></div>
+</div>
+
