@@ -2,8 +2,6 @@ import express from 'express';
 import http from 'http';
 import {Server, Socket} from 'socket.io';
 import cors from 'cors';
-import * as os from 'os';
-import * as pty from 'node-pty';
 import {ParsedUrlQuery} from "node:querystring";
 import ShellProcess, {TerminalOpenRequest} from "./terminal";
 
@@ -18,24 +16,6 @@ const io = new Server(server, {
 });
 
 app.use(cors());
-
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
-});
-
-function spawnTerminal(rows: number, cols: number) {
-    const isWindows = os.platform() === 'win32';
-    const shell = isWindows ? 'powershell.exe' : 'bash';
-
-    return pty.spawn(shell, [], {
-        name: 'xterm-256color',
-        cols: cols,
-        rows: rows,
-        cwd: isWindows ? process.env.USERPROFILE : process.env.HOME,
-        env: Object.assign({TEST: "Environment vars work"}, process.env),
-        useConpty: false
-    });
-}
 
 function getConnectQuery(query: ParsedUrlQuery): TerminalOpenRequest {
     return {
