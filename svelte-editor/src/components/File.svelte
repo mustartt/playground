@@ -50,7 +50,7 @@
     }
 
     function handleRightClick(event: any) {
-
+        console.log(event);
     }
 
     onMount(async () => {
