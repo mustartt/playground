@@ -17,5 +17,8 @@
     "socket.io": "^4.7.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "rimraf": "^5.0.5"
   }
 }

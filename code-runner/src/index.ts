@@ -4,6 +4,7 @@ import {Server, Socket} from 'socket.io';
 import cors from 'cors';
 import {ParsedUrlQuery} from "node:querystring";
 import ShellProcess, {TerminalOpenRequest} from "./terminal";
+import FileSystem from "./filesystem";
 
 const app = express();
 const server = http.createServer(app);
@@ -28,8 +29,11 @@ io.on('connection', (socket) => {
     console.log('a user connected');
 
     const openRequest = getConnectQuery(socket.handshake.query);
+
     const proc = new ShellProcess(openRequest);
+    const fs = new FileSystem('C:\\Users\\henry\\workspace\\playground\\editor-playground');
     proc.register(socket);
+    fs.register(socket);
 });
 
 server.listen(3000, () => {

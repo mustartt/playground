@@ -1,5 +1,7 @@
 import * as fs from "fs";
 import path from "node:path";
+import {Socket} from "socket.io";
+import {rimraf} from "rimraf";
 
 export interface FileNode {
     id: string;
@@ -19,14 +21,84 @@ export interface DirectoryNode {
 export type FSNode = FileNode | DirectoryNode;
 
 export default class FileSystem {
-    private readonly cwd: string;
+    private readonly root: string;
 
     constructor(cwd: string) {
-        this.cwd = cwd;
+        this.root = cwd;
+
+    }
+
+    register(socket: Socket) {
+        socket.on('fs-reload', async () => {
+            try {
+                const data = await this.readProject();
+                socket.emit('fs-reload', {
+                    error: null,
+                    data: data
+                });
+            } catch (err: unknown) {
+                socket.emit('fs-reload', {
+                    error: err,
+                    data: null
+                });
+            }
+        });
+        socket.on('fs-flush', async (data: FSNode) => {
+            try {
+                await this.writeProject(data);
+                socket.emit('fs-flush', {
+                    error: null,
+                });
+            } catch (err: unknown) {
+                socket.emit('fs-flush', {
+                    error: err,
+                });
+            }
+        });
+    }
+
+    async writeFiles(dir: string, data: FSNode): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (data.type === 'file') {
+                const file = path.join(dir, data.filename);
+                fs.appendFile(file, data.content, (err) => {
+                    if (err) {
+                        reject(err);
+                    }
+                    resolve();
+                });
+            } else {
+                const directory = path.join(dir, data.name);
+                fs.mkdir(directory, async (err) => {
+                    if (err) {
+                        reject(err);
+                    }
+                    for (const child of data.children) {
+                        await this.writeFiles(directory, child);
+                    }
+                    resolve();
+                });
+            }
+        });
+    }
+
+    async writeProject(data: FSNode): Promise<void> {
+        await rimraf(this.root);
+        return new Promise((resolve, reject) => {
+            fs.mkdir(this.root, async (err) => {
+                if (err) {
+                    reject(err);
+                }
+                for (const child of (data as DirectoryNode).children) {
+                    await this.writeFiles(this.root, child);
+                }
+                resolve();
+            });
+        });
     }
 
     async readProject() {
-        return this.readRecursive(this.cwd);
+        return this.readRecursive(this.root);
     }
 
     async readDirectory(dir: string): Promise<string[]> {
@@ -59,7 +131,6 @@ export default class FileSystem {
     async isFile(file: string): Promise<boolean> {
         return new Promise((resolve, reject) => {
             fs.stat(file, (statErr, stats) => {
-                console.log("stats:", file, stats);
                 if (statErr) {
                     reject(statErr);
                 }
@@ -70,10 +141,8 @@ export default class FileSystem {
 
     async readRecursive(file: string): Promise<FSNode> {
         if (await this.isFile(file)) {
-            console.log("file: ", file);
             return this.readFile(file);
         } else {
-            console.log("dir: ", file);
             let children: FSNode[] = [];
             const dirs = await this.readDirectory(file);
             for (const dir of dirs) {
@@ -84,7 +153,7 @@ export default class FileSystem {
                 id: file,
                 type: 'dir',
                 collapsed: false,
-                name: file,
+                name: path.basename(file),
                 children
             };
         }
