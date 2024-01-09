@@ -129,3 +129,14 @@ export function toggle(node: FSNode, id: string) {
     return node;
 }
 
+export function replace(node: FSNode, id: string, content: string) {
+    if (node.type === "file") {
+        return node.id === id ? {
+            ...node,
+            content
+        } : node;
+    }
+    node.children = node.children.map((node) => replace(node, id, content));
+    return node;
+}
+
