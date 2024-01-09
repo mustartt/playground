@@ -3,6 +3,9 @@
     import Editor from "../../components/Editor.svelte";
     import Terminal from "../../components/Terminal.svelte";
     import FileViewer from "../../components/FileViewer.svelte";
+    import EditorHeader from "../../components/EditorHeader.svelte";
+
+
 </script>
 
 <div class="h-screen flex flex-col">
@@ -14,8 +17,8 @@
         <div style="width: calc(100% - 16rem);">
             <SplitPane>
                 <div slot="left" class="flex flex-col h-full">
-                    <div class="flex-none bg-neutral-800 h-6 rounded-t"></div>
-                    <Editor></Editor>
+                    <EditorHeader/>
+                    <Editor/>
                     <div class="flex-none bg-neutral-800 h-6 rounded-b"></div>
                 </div>
                 <div slot="right" class="flex flex-col h-full">

@@ -1,12 +1,12 @@
 <script lang="ts">
-    import {type DirectoryNode, type FSNode, fsStore} from "$lib/fs";
+    import {type FSNode, editorStore} from "$lib/editor";
     import {onDestroy} from "svelte";
     import File from "./File.svelte";
 
     let root: FSNode;
 
-    const unsubscribe = fsStore.subscribe((value) => {
-        root = value;
+    const unsubscribe = editorStore.subscribe((value) => {
+        root = value.fs;
     });
 
     onDestroy(() => {
