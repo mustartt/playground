@@ -1,6 +1,7 @@
 <script lang="ts">
     import {onDestroy, onMount} from 'svelte';
     import {io, Socket} from 'socket.io-client';
+    import {socketStore} from "$lib/socket.js";
 
     let socket: Socket;
     let terminal: any;
@@ -35,6 +36,10 @@
         exitCode: number;
     }
 
+    socketStore.subscribe((value) => {
+        socket = value.socket;
+    });
+
     onMount(async () => {
         const {Terminal} = await import('xterm');
         const {FitAddon} = await import('xterm-addon-fit');
@@ -51,46 +56,36 @@
         term.write('Initializing container...\r\n');
         term.writeln("");
 
-        // socket = io('http://localhost:3000', {
-        //     path: '/socket',
-        //     timeout: 5000,
-        //     reconnectionAttempts: 5,
-        //     query: {
-        //         rows: 24,
-        //         cols: 80
-        //     }
-        // });
-
         resizeObserver = new ResizeObserver((entries) => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
                 fitAddon.fit();
-                // const dim = fitAddon.proposeDimensions();
-                // socket.emit('resize', dim);
+                const dim = fitAddon.proposeDimensions();
+                socket.emit('resize', dim);
             }, 25);
         });
         resizeObserver.observe(container);
 
-        // socket.on('connect', () => {
-        //     term.writeln("");
-        //     term.writeln("Connected to container, starting terminal session...");
-        //     term.writeln("");
-        //     console.log('socket connected');
-        //
-        //     socket.on('data', (data) => {
-        //         term.write(data);
-        //     });
-        //
-        //     socket.on('close', (data: TerminalClose) => {
-        //         term.write('\r\n');
-        //         term.write(`Terminal closed with exit code ${data.exitCode}. \r\n`);
-        //         socket.close();
-        //     });
-        //
-        //     term.onData((data) => {
-        //         socket.emit('data', data);
-        //     });
-        // });
+        socket.on('connect', () => {
+            term.writeln("");
+            term.writeln("Connected to container, starting terminal session...");
+            term.writeln("");
+            console.log('socket connected');
+
+            socket.on('data', (data) => {
+                term.write(data);
+            });
+
+            socket.on('close', (data: TerminalClose) => {
+                term.write('\r\n');
+                term.write(`Terminal closed with exit code ${data.exitCode}. \r\n`);
+                socket.close();
+            });
+
+            term.onData((data) => {
+                socket.emit('data', data);
+            });
+        });
     });
 
     onDestroy(() => {

@@ -69,7 +69,7 @@ export default class FileSystem {
                 });
             } else {
                 const directory = path.join(dir, data.name);
-                fs.mkdir(directory, async (err) => {
+                fs.mkdir(directory, {recursive: true}, async (err) => {
                     if (err) {
                         reject(err);
                     }

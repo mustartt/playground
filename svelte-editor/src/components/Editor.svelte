@@ -1,7 +1,9 @@
 <script lang="ts">
     import {onDestroy, onMount} from 'svelte';
     import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api';
-    import {editorStore} from "$lib/editor";
+    import {editorStore, fsStore} from "$lib/editor";
+    import type {Socket} from "socket.io-client";
+    import {socketStore} from "$lib/socket";
 
     let editor: Monaco.editor.IStandaloneCodeEditor;
     let monaco: typeof Monaco;
@@ -9,10 +11,14 @@
     let container: any;
     let resizeObserver: any;
     let timeoutId: any;
+    let socket: Socket;
+    let fileTimeoutId: any;
+
+    socketStore.subscribe((value) => {
+        socket = value.socket;
+    });
 
     onMount(async () => {
-        // Import our 'monaco.ts' file here
-        // (onMount() will only be executed in the browser, which is what we want)
         monaco = (await import('$lib/monaco')).default;
 
         editor = monaco.editor.create(editorContainer, {
@@ -20,7 +26,7 @@
             scrollBeyondLastLine: true,
             automaticLayout: false, // we use automatic layout to shrink
             padding: {
-                top: 24
+                top: 12
             },
             model: null
         });
@@ -36,6 +42,15 @@
             }, 25);
         });
         resizeObserver.observe(container);
+
+        fsStore.subscribe((value) => {
+            clearTimeout(fileTimeoutId);
+            fileTimeoutId = setTimeout(() => {
+                console.log('flush start');
+                socket.emit('fs-flush', value);
+            }, 1000);
+        });
+        socket.on('fs-flush', (value) => console.log('flush done'));
     });
 
     onDestroy(() => {

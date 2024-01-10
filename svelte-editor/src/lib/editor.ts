@@ -1,4 +1,4 @@
-import {writable} from "svelte/store";
+import {derived, writable} from "svelte/store";
 import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
 export interface FileNode {
@@ -79,30 +79,6 @@ const fs: FSNode = {
                     filename: 'test5.py',
                     content: "# test5.py"
                 },
-                {
-                    id: '6',
-                    type: 'file',
-                    filename: 'test6.py',
-                    content: "# test6.py"
-                },
-                {
-                    id: '7',
-                    type: 'file',
-                    filename: 'test6.py',
-                    content: "# test6.py"
-                },
-                {
-                    id: '8',
-                    type: 'file',
-                    filename: 'test6.py',
-                    content: "# test6.py"
-                },
-                {
-                    id: '9',
-                    type: 'file',
-                    filename: 'test6.py',
-                    content: "# test6.py"
-                },
             ]
         }
     ]
@@ -114,6 +90,8 @@ export const editorStore = writable<EditorStore>({
     fs: fs,
     editor: null
 });
+
+export const fsStore = derived(editorStore, ($s) => $s.fs);
 
 export function toggle(node: FSNode, id: string) {
     if (node.type === 'file') {
