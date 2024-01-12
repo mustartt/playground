@@ -50,7 +50,7 @@
                 socket.emit('fs-flush', value);
             }, 1000);
         });
-        socket.on('fs-flush', (value) => console.log('flush done'));
+        socket.on('fs-flush', (value) => console.log('flush done', value));
     });
 
     onDestroy(() => {

@@ -1,4 +1,9 @@
-<button class="flex flex-row justify-center items-center text-white p-2 rounded transition-colors duration-50 hover:bg-neutral-700">
+<script lang="ts">
+    export let handler: () => void;
+</script>
+
+<button class="flex flex-row justify-center items-center text-white p-2 rounded transition-colors duration-50 hover:bg-neutral-700"
+        on:click={handler}>
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
          class="w-6 h-6">
         <path stroke-linecap="round" stroke-linejoin="round"

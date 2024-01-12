@@ -11,6 +11,10 @@ const socket = io('http://localhost:3000', {
     }
 });
 
+socket.io.on("error", (err) => {
+    console.error(err);
+});
+
 export const socketStore = writable({
     socket: socket
 });

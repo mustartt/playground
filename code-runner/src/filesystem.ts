@@ -1,7 +1,6 @@
 import * as fs from "fs";
 import path from "node:path";
 import {Socket} from "socket.io";
-import {rimraf} from "rimraf";
 
 export interface FileNode {
     id: string;
@@ -25,7 +24,6 @@ export default class FileSystem {
 
     constructor(cwd: string) {
         this.root = cwd;
-
     }
 
     register(socket: Socket) {
@@ -73,25 +71,54 @@ export default class FileSystem {
                     if (err) {
                         reject(err);
                     }
+                    const requests = [];
                     for (const child of data.children) {
-                        await this.writeFiles(directory, child);
+                        requests.push(this.writeFiles(directory, child));
                     }
+                    await Promise.all(requests);
                     resolve();
                 });
             }
         });
     }
 
-    async writeProject(data: FSNode): Promise<void> {
-        await rimraf(this.root);
+    async cleanDirectory(): Promise<void> {
         return new Promise((resolve, reject) => {
-            fs.mkdir(this.root, async (err) => {
+            fs.readdir(this.root, async (err, files) => {
                 if (err) {
                     reject(err);
                 }
-                for (const child of (data as DirectoryNode).children) {
-                    await this.writeFiles(this.root, child);
+                const requests = [];
+                for (const file of files) {
+                    requests.push(new Promise<void>((resolve1, reject1) => {
+                        fs.rm(path.join(this.root, file),
+                            {recursive: true, force: true},
+                            (err) => {
+                                if (err) {
+                                    reject1(err);
+                                }
+                                resolve1();
+                            });
+                    }));
                 }
+                await Promise.all(requests);
+                resolve();
+            });
+        });
+    }
+
+    async writeProject(data: FSNode): Promise<void> {
+        await this.cleanDirectory();
+        return new Promise((resolve, reject) => {
+            fs.mkdir(this.root, {recursive: true}, async (err) => {
+                if (err) {
+                    reject(err);
+                }
+                const requests = [];
+                for (const child of (data as DirectoryNode).children) {
+                    requests.push(this.writeFiles(this.root, child));
+                }
+                await Promise.all(requests);
                 resolve();
             });
         });

@@ -67,24 +67,21 @@
         resizeObserver.observe(container);
 
         socket.on('connect', () => {
-            term.writeln("");
-            term.writeln("Connected to container, starting terminal session...");
-            term.writeln("");
             console.log('socket connected');
+        });
 
-            socket.on('data', (data) => {
-                term.write(data);
-            });
+        socket.on('data', (data) => {
+            term.write(data);
+        });
 
-            socket.on('close', (data: TerminalClose) => {
-                term.write('\r\n');
-                term.write(`Terminal closed with exit code ${data.exitCode}. \r\n`);
-                socket.close();
-            });
+        socket.on('close', (data: TerminalClose) => {
+            term.write('\r\n');
+            term.write(`Terminal closed with exit code ${data.exitCode}. \r\n`);
+            socket.close();
+        });
 
-            term.onData((data) => {
-                socket.emit('data', data);
-            });
+        term.onData((data) => {
+            socket.emit('data', data);
         });
     });
 

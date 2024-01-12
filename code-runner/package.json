@@ -5,20 +5,22 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "test": "ts-node src/test.ts"
+    "images": "cd images && docker build -t coderunner-base:v1.0.0 .",
+    "build": "docker build -t coderunner:v1.0.0 . --no-cache",
+    "start-docker": "docker run -p 3000:3000 --rm -it coderunner:v1.0.0"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/express": "^4.17.21",
-    "@types/node": "^20.10.6",
+    "@types/node": "^20.10.6"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "node-pty": "^1.0.0",
     "socket.io": "^4.7.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "rimraf": "^5.0.5"
   }
 }

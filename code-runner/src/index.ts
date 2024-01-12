@@ -5,6 +5,9 @@ import cors from 'cors';
 import {ParsedUrlQuery} from "node:querystring";
 import ShellProcess, {TerminalOpenRequest} from "./terminal";
 import FileSystem from "./filesystem";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
@@ -18,6 +21,14 @@ const io = new Server(server, {
 
 app.use(cors());
 
+console.log('cwd', process.cwd());
+console.log('playground', process.env.WORKING_DIR);
+
+const cwd = process.env.WORKING_DIR;
+if (!cwd) {
+    process.exit(1);
+}
+
 function getConnectQuery(query: ParsedUrlQuery): TerminalOpenRequest {
     return {
         rows: parseInt(query.rows as string) || 24,
@@ -30,8 +41,8 @@ io.on('connection', (socket) => {
 
     const openRequest = getConnectQuery(socket.handshake.query);
 
-    const proc = new ShellProcess(openRequest);
-    const fs = new FileSystem('C:\\Users\\henry\\workspace\\playground\\editor-playground');
+    const proc = new ShellProcess(cwd, openRequest);
+    const fs = new FileSystem(cwd);
     proc.register(socket);
     fs.register(socket);
 });

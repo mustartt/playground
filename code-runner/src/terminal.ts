@@ -19,14 +19,14 @@ export interface TerminalCloseRequest {
 export default class ShellProcess {
     private proc: pty.IPty;
 
-    constructor(request: TerminalOpenRequest) {
+    constructor(cwd: string, request: TerminalOpenRequest) {
         const isWindows = os.platform() === 'win32';
         const shell = isWindows ? 'powershell.exe' : 'bash';
         this.proc = pty.spawn(shell, [], {
             name: 'xterm-256color',
             cols: request.cols,
             rows: request.rows,
-            cwd: isWindows ? process.env.USERPROFILE : process.env.HOME,
+            cwd: cwd,
             env: Object.assign({TEST: "Environment vars work"}, process.env),
             useConpty: false
         });
