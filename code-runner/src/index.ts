@@ -44,8 +44,23 @@ function getConnectQuery(query: ParsedUrlQuery): TerminalOpenRequest {
     };
 }
 
+const initialTimeout = setTimeout(() => {
+    logger.info('a user did not connect within time window, exiting');
+    process.exit(0);
+}, 10000);
+
 io.on('connection', (socket) => {
     logger.info('a user connected');
+    clearTimeout(initialTimeout);
+
+    let clientTimeout: any;
+    socket.on('heartbeat', () => {
+        clearTimeout(clientTimeout);
+        clientTimeout = setTimeout(() => {
+            logger.info('user missed heartbeats exiting');
+            process.exit(0);
+        }, 10000);
+    });
 
     const openRequest = getConnectQuery(socket.handshake.query);
 
@@ -55,7 +70,10 @@ io.on('connection', (socket) => {
     fs.register(socket);
 
     socket.on('disconnect', () => {
-        logger.info('a user disconnected');
+        setTimeout(() => {
+            logger.info('user has disconnected exiting');
+            process.exit(0);
+        }, 1000);
     });
 });
 
