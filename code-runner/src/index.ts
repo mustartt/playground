@@ -6,8 +6,15 @@ import {ParsedUrlQuery} from "node:querystring";
 import ShellProcess, {TerminalOpenRequest} from "./terminal";
 import FileSystem from "./filesystem";
 import dotenv from 'dotenv';
+import {logger} from "./logger";
 
 dotenv.config();
+const configuration = {
+    workdir: process.env.WORKING_DIR,
+    cwd: process.cwd()
+};
+
+logger.info('starting code-runner');
 
 const app = express();
 const server = http.createServer(app);
@@ -21,11 +28,12 @@ const io = new Server(server, {
 
 app.use(cors());
 
-console.log('cwd', process.cwd());
-console.log('playground', process.env.WORKING_DIR);
+logger.info(`config: cwd ${configuration.cwd}`);
+logger.info(`config: playground ${configuration.workdir}`);
 
-const cwd = process.env.WORKING_DIR;
+const cwd = configuration.cwd;
 if (!cwd) {
+    logger.error('missing WORKING_DIR environment variable');
     process.exit(1);
 }
 
@@ -37,7 +45,7 @@ function getConnectQuery(query: ParsedUrlQuery): TerminalOpenRequest {
 }
 
 io.on('connection', (socket) => {
-    console.log('a user connected');
+    logger.info('a user connected');
 
     const openRequest = getConnectQuery(socket.handshake.query);
 
@@ -45,8 +53,12 @@ io.on('connection', (socket) => {
     const fs = new FileSystem(cwd);
     proc.register(socket);
     fs.register(socket);
+
+    socket.on('disconnect', () => {
+        logger.info('a user disconnected');
+    });
 });
 
 server.listen(3000, () => {
-    console.log('listening on *:3000');
+    logger.info('code-runner started on port 3000');
 });
